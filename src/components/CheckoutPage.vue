@@ -24,6 +24,15 @@
             @update-quantity="handleUpdateQuantity"
             @remove-item="handleRemoveItem"
           />
+          
+          <div class="recommend-section" v-if="filteredRecommendedProducts.length > 0">
+            <RecommendPanel
+              :products="filteredRecommendedProducts"
+              @add-to-cart="handleAddToCart"
+              @add-success="handleAddSuccess"
+              @add-error="handleAddError"
+            />
+          </div>
         </div>
         
         <div class="content-right">
@@ -85,8 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
-import type { CartItem, Order, Coupon, OrderSummary } from '@/types'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import type { CartItem, Order, Coupon, OrderSummary, Product } from '@/types'
 import { 
   addToCart, 
   toggleItemSelection, 
@@ -98,12 +107,15 @@ import {
   calculateOrderSummary,
   createOrder,
   getOrderStatusText,
-  formatPrice
+  formatPrice,
+  createLock,
+  type Lock
 } from '@/utils'
-import { mockProducts, mockCoupons } from '@/data/mockData'
+import { mockProducts, mockCoupons, recommendedProducts } from '@/data/mockData'
 import ProductList from './ProductList.vue'
 import CartSummary from './CartSummary.vue'
 import OrderSubmit from './OrderSubmit.vue'
+import RecommendPanel from './RecommendPanel.vue'
 
 const cartItems = ref<CartItem[]>([])
 const appliedCoupon = ref<Coupon | null>(null)
@@ -111,6 +123,8 @@ const showSuccessModal = ref(false)
 const submittedOrder = ref<Order | null>(null)
 
 const availableCoupons = ref<Coupon[]>(mockCoupons)
+const addToCartLock = createLock()
+const addingProductIds = ref<Set<string>>(new Set())
 
 const cartStats = computed(() => {
   return getCartStats(cartItems.value)
@@ -131,6 +145,16 @@ const orderSummary = computed<OrderSummary>(() => {
   )
 })
 
+const cartProductIds = computed(() => {
+  return new Set(cartItems.value.map(item => item.product.id))
+})
+
+const filteredRecommendedProducts = computed(() => {
+  return recommendedProducts.filter(
+    product => !cartProductIds.value.has(product.id)
+  )
+})
+
 const handleToggleSelection = (productId: string) => {
   cartItems.value = toggleItemSelection(cartItems.value, productId)
 }
@@ -145,6 +169,44 @@ const handleUpdateQuantity = (productId: string, quantity: number) => {
 
 const handleRemoveItem = (productId: string) => {
   cartItems.value = removeFromCart(cartItems.value, productId)
+}
+
+const handleAddToCart = async (product: Product) => {
+  if (product.stock <= 0) {
+    return
+  }
+  
+  if (cartProductIds.value.has(product.id)) {
+    return
+  }
+  
+  if (addingProductIds.value.has(product.id)) {
+    return
+  }
+  
+  if (!addToCartLock.tryLock()) {
+    return
+  }
+  
+  try {
+    addingProductIds.value.add(product.id)
+    
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    cartItems.value = addToCart(cartItems.value, product, 1)
+    
+  } finally {
+    addingProductIds.value.delete(product.id)
+    addToCartLock.unlock()
+  }
+}
+
+const handleAddSuccess = (product: Product) => {
+  console.log(`商品 ${product.name} 已成功加入购物车`)
+}
+
+const handleAddError = (product: Product, error: Error) => {
+  console.error(`商品 ${product.name} 加入购物车失败:`, error)
 }
 
 const handleClearSelected = () => {
@@ -290,6 +352,13 @@ onMounted(() => {
 
 .content-left {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.recommend-section {
+  width: 100%;
 }
 
 .content-right {

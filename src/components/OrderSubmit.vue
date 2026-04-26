@@ -50,9 +50,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import type { CartItem, Coupon } from '@/types'
-import { formatPrice } from '@/utils'
+import { formatPrice, createLock, type Lock } from '@/utils'
 
 interface Props {
   cartItems: CartItem[]
@@ -73,6 +73,11 @@ const emit = defineEmits<Emits>()
 const couponCode = ref('')
 const isApplyingCoupon = ref(false)
 const isSubmitting = ref(false)
+const isTogglingAll = ref(false)
+
+const applyCouponLock = createLock()
+const submitLock = createLock()
+const toggleAllLock = createLock()
 
 const isAllSelected = computed(() => {
   return props.cartItems.length > 0 && props.cartItems.every(item => item.selected)
@@ -83,31 +88,64 @@ const isIndeterminate = computed(() => {
   return selectedCount > 0 && selectedCount < props.cartItems.length
 })
 
-const handleToggleAll = () => {
-  emit('toggle-all', !isAllSelected.value)
+const handleToggleAll = async () => {
+  if (isTogglingAll.value || !toggleAllLock.tryLock()) {
+    return
+  }
+  
+  isTogglingAll.value = true
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    emit('toggle-all', !isAllSelected.value)
+  } finally {
+    isTogglingAll.value = false
+    toggleAllLock.unlock()
+  }
 }
 
 const handleApplyCoupon = async () => {
-  if (!couponCode.value.trim() || isApplyingCoupon.value) return
+  const code = couponCode.value.trim()
+  
+  if (!code || isApplyingCoupon.value || !applyCouponLock.tryLock()) {
+    return
+  }
   
   isApplyingCoupon.value = true
   
-  setTimeout(() => {
-    emit('apply-coupon', couponCode.value.trim())
+  try {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    emit('apply-coupon', code)
+  } finally {
     isApplyingCoupon.value = false
-  }, 500)
+    applyCouponLock.unlock()
+  }
 }
 
 const handleSubmit = async () => {
-  if (props.selectedQuantity === 0 || isSubmitting.value) return
+  if (props.selectedQuantity === 0 || isSubmitting.value || !submitLock.tryLock()) {
+    return
+  }
   
   isSubmitting.value = true
   
-  setTimeout(() => {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
     emit('submit-order')
+  } finally {
     isSubmitting.value = false
-  }, 1000)
+    submitLock.unlock()
+  }
 }
+
+onUnmounted(() => {
+  isApplyingCoupon.value = false
+  isSubmitting.value = false
+  isTogglingAll.value = false
+})
 </script>
 
 <style scoped>

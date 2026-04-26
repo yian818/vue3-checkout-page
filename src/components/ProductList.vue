@@ -98,9 +98,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import type { CartItem } from '@/types'
-import { formatPrice, calculateDiscount, calculateItemTotal } from '@/utils'
+import { 
+  formatPrice, 
+  calculateDiscount, 
+  calculateItemTotal,
+  createLock,
+  type Lock
+} from '@/utils'
 
 interface Props {
   cartItems: CartItem[]
@@ -115,34 +121,107 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+const quantityLocks = ref<Map<string, Lock>>(new Map())
+const deletingIds = ref<Set<string>>(new Set())
+const selectingIds = ref<Set<string>>(new Set())
+
+const getQuantityLock = (productId: string): Lock => {
+  if (!quantityLocks.value.has(productId)) {
+    quantityLocks.value.set(productId, createLock())
+  }
+  return quantityLocks.value.get(productId)!
+}
+
 const handleToggleSelection = (productId: string) => {
+  if (selectingIds.value.has(productId)) {
+    return
+  }
+  
+  selectingIds.value.add(productId)
+  
   emit('toggle-selection', productId)
+  
+  setTimeout(() => {
+    selectingIds.value.delete(productId)
+  }, 100)
 }
 
 const handleUpdateQuantity = (productId: string, quantity: number) => {
   emit('update-quantity', productId, quantity)
 }
 
-const handleDecrease = (item: CartItem) => {
-  if (item.quantity > 1) {
-    handleUpdateQuantity(item.product.id, item.quantity - 1)
+const handleDecrease = async (item: CartItem) => {
+  if (item.quantity <= 1) {
+    return
+  }
+  
+  const lock = getQuantityLock(item.product.id)
+  
+  if (!lock.tryLock()) {
+    return
+  }
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    if (item.quantity > 1) {
+      handleUpdateQuantity(item.product.id, item.quantity - 1)
+    }
+  } finally {
+    lock.unlock()
   }
 }
 
-const handleIncrease = (item: CartItem) => {
-  if (item.quantity < item.product.stock) {
-    handleUpdateQuantity(item.product.id, item.quantity + 1)
+const handleIncrease = async (item: CartItem) => {
+  if (item.quantity >= item.product.stock) {
+    return
+  }
+  
+  const lock = getQuantityLock(item.product.id)
+  
+  if (!lock.tryLock()) {
+    return
+  }
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    if (item.quantity < item.product.stock) {
+      handleUpdateQuantity(item.product.id, item.quantity + 1)
+    }
+  } finally {
+    lock.unlock()
   }
 }
 
-const handleDelete = (productId: string) => {
-  emit('remove-item', productId)
+const handleDelete = async (productId: string) => {
+  if (deletingIds.value.has(productId)) {
+    return
+  }
+  
+  deletingIds.value.add(productId)
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
+    emit('remove-item', productId)
+  } finally {
+    setTimeout(() => {
+      deletingIds.value.delete(productId)
+    }, 300)
+  }
 }
 
 const handleImageError = (event: Event) => {
   const target = event.target as HTMLImageElement
   target.src = 'https://picsum.photos/200/200'
 }
+
+onUnmounted(() => {
+  quantityLocks.value.clear()
+  deletingIds.value.clear()
+  selectingIds.value.clear()
+})
 </script>
 
 <style scoped>
