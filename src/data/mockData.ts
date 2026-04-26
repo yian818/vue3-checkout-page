@@ -53,6 +53,89 @@ export const mockProducts: Product[] = [
   }
 ]
 
+export const recommendedProducts: Product[] = [
+  {
+    id: '6',
+    name: 'AirPods Pro 第二代 USB-C',
+    price: 1899,
+    originalPrice: 1999,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=AirPods%20Pro%202nd%20generation%20wireless%20earbuds%20white%20color%20with%20charging%20case%20professional%20product%20photo&image_size=square_hd',
+    description: '主动降噪，空间音频，USB-C充电接口',
+    stock: 300,
+    category: '耳机'
+  },
+  {
+    id: '7',
+    name: 'Magic Keyboard 妙控键盘',
+    price: 899,
+    originalPrice: 999,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Apple%20Magic%20Keyboard%20wireless%20keyboard%20white%20color%20professional%20product%20photo&image_size=square_hd',
+    description: '无线蓝牙键盘，触控板设计，背光按键',
+    stock: 250,
+    category: '配件'
+  },
+  {
+    id: '8',
+    name: 'Samsung Galaxy S24 Ultra',
+    price: 8999,
+    originalPrice: 9999,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Samsung%20Galaxy%20S24%20Ultra%20smartphone%20titanium%20gray%20color%20professional%20product%20photo&image_size=square_hd',
+    description: 'AI智能手机，2亿像素相机，S Pen手写笔',
+    stock: 120,
+    category: '手机'
+  },
+  {
+    id: '9',
+    name: 'DJI Mini 4 Pro 无人机',
+    price: 5799,
+    originalPrice: 6199,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=DJI%20Mini%204%20Pro%20drone%20quadcopter%20with%20camera%20professional%20product%20photo&image_size=square_hd',
+    description: '4K HDR视频，智能跟随，全向避障',
+    stock: 80,
+    category: '数码'
+  },
+  {
+    id: '10',
+    name: 'Logitech MX Master 3S 鼠标',
+    price: 799,
+    originalPrice: 899,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Logitech%20MX%20Master%203S%20wireless%20mouse%20graphite%20color%20professional%20product%20photo&image_size=square_hd',
+    description: '8000 DPI传感器，电磁滚轮，多设备切换',
+    stock: 400,
+    category: '配件'
+  },
+  {
+    id: '11',
+    name: 'Kindle Oasis 电子书阅读器',
+    price: 2399,
+    originalPrice: 2699,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Amazon%20Kindle%20Oasis%20e-reader%20graphite%20color%20with%20warm%20light%20professional%20product%20photo&image_size=square_hd',
+    description: '7英寸超清屏幕，可调节冷暖色温，防水设计',
+    stock: 150,
+    category: '数码'
+  },
+  {
+    id: '12',
+    name: 'Apple TV 4K 128GB',
+    price: 1499,
+    originalPrice: 1699,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Apple%20TV%204K%20streaming%20device%20black%20color%20with%20Siri%20Remote%20professional%20product%20photo&image_size=square_hd',
+    description: 'A15仿生芯片，支持杜比视界，Thread智能家居',
+    stock: 200,
+    category: '数码'
+  },
+  {
+    id: '13',
+    name: 'Bose QuietComfort Ultra 耳机',
+    price: 3499,
+    originalPrice: 3999,
+    image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=Bose%20QuietComfort%20Ultra%20wireless%20noise%20cancelling%20headphones%20black%20color%20professional%20product%20photo&image_size=square_hd',
+    description: '空间音频技术，世界级降噪，舒适佩戴体验',
+    stock: 100,
+    category: '耳机'
+  }
+]
+
 export const mockCoupons: Coupon[] = [
   {
     id: '1',

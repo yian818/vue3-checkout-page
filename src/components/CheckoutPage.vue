@@ -24,6 +24,13 @@
             @update-quantity="handleUpdateQuantity"
             @remove-item="handleRemoveItem"
           />
+          
+          <div class="recommend-section">
+            <RecommendPanel
+              :products="filteredRecommendedProducts"
+              @add-to-cart="handleAddToCart"
+            />
+          </div>
         </div>
         
         <div class="content-right">
@@ -86,7 +93,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
-import type { CartItem, Order, Coupon, OrderSummary } from '@/types'
+import type { CartItem, Order, Coupon, OrderSummary, Product } from '@/types'
 import { 
   addToCart, 
   toggleItemSelection, 
@@ -100,10 +107,11 @@ import {
   getOrderStatusText,
   formatPrice
 } from '@/utils'
-import { mockProducts, mockCoupons } from '@/data/mockData'
+import { mockProducts, mockCoupons, recommendedProducts } from '@/data/mockData'
 import ProductList from './ProductList.vue'
 import CartSummary from './CartSummary.vue'
 import OrderSubmit from './OrderSubmit.vue'
+import RecommendPanel from './RecommendPanel.vue'
 
 const cartItems = ref<CartItem[]>([])
 const appliedCoupon = ref<Coupon | null>(null)
@@ -131,6 +139,16 @@ const orderSummary = computed<OrderSummary>(() => {
   )
 })
 
+const cartProductIds = computed(() => {
+  return new Set(cartItems.value.map(item => item.product.id))
+})
+
+const filteredRecommendedProducts = computed(() => {
+  return recommendedProducts.filter(
+    product => !cartProductIds.value.has(product.id)
+  )
+})
+
 const handleToggleSelection = (productId: string) => {
   cartItems.value = toggleItemSelection(cartItems.value, productId)
 }
@@ -145,6 +163,12 @@ const handleUpdateQuantity = (productId: string, quantity: number) => {
 
 const handleRemoveItem = (productId: string) => {
   cartItems.value = removeFromCart(cartItems.value, productId)
+}
+
+const handleAddToCart = (product: Product) => {
+  if (product.stock <= 0) return
+  
+  cartItems.value = addToCart(cartItems.value, product, 1)
 }
 
 const handleClearSelected = () => {
@@ -290,6 +314,13 @@ onMounted(() => {
 
 .content-left {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.recommend-section {
+  width: 100%;
 }
 
 .content-right {
